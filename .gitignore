@@ -1,0 +1,20 @@
+# entorno ML (pesado, específico de esta máquina — recrear con: py -3.12 -m venv ml/.venv)
+ml/.venv/
+ml/__pycache__/
+
+# artefactos de entrenamiento (pesos, logs) — se regeneran con train.py
+ml/runs/
+ml/yolo11n.pt
+ml/train_log.txt
+
+# datos intermedios del auto-etiquetado (se regeneran con auto_label.py + prepare_split.py)
+ml/dataset/labeled/
+ml/dataset/split/
+ml/dataset/debug_preview/
+
+# dataset_tool: descargas temporales de video
+dataset_tool/_tmp_videos/
+dataset_tool/__pycache__/
+
+# generado, no fuente
+PLAN.html

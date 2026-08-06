@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Isorropia Harvest</title>
+<link rel="icon" type="image/jpeg" href="logo.jpeg">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #14100c; color: #f0e6d8; min-height: 100vh; display: flex; flex-direction: column; }
+  header { padding: 14px 18px; display: flex; align-items: center; gap: 10px; }
+  header .logo { width: 34px; height: 34px; border-radius: 10px; background: #fff; display: grid; place-items: center; overflow: hidden; }
+  header .logo img { width: 100%; height: 100%; object-fit: contain; }
+  header h1 { font-size: 16px; font-weight: 700; letter-spacing: 0.02em; }
+  header p { font-size: 10px; color: #a89880; text-transform: uppercase; letter-spacing: 0.18em; }
+  .stage { position: relative; flex: 1; margin: 0 12px; border-radius: 16px; overflow: hidden; background: #000; min-height: 50vh; }
+  video, canvas.overlay { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .stats { display: flex; gap: 10px; padding: 14px 12px; }
+  .stat { flex: 1; background: #1f1812; border: 1px solid #35291d; border-radius: 12px; padding: 10px 14px; }
+  .stat .n { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: 10px; color: #a89880; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
+  .stat.rojo .n { color: #e5484d; }
+  .coords { margin: 0 12px 12px; background: #1f1812; border: 1px solid #35291d; border-radius: 12px; padding: 10px 14px; max-height: 22vh; overflow-y: auto; }
+  .coords .t { font-size: 10px; color: #a89880; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+  .coords table { width: 100%; font-size: 12px; border-collapse: collapse; }
+  .coords td { padding: 3px 4px; font-variant-numeric: tabular-nums; border-bottom: 1px solid #2a2119; }
+  .coords .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .coords .empty { color: #6b5f4f; font-size: 12px; padding: 4px; }
+  .actions { display: flex; gap: 10px; padding: 0 12px 18px; }
+  button { flex: 1; padding: 13px; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; }
+  #btnStart { background: #6F4E37; color: #fff; }
+  #btnCapture { background: #1f1812; color: #f0e6d8; border: 1px solid #35291d; }
+  #status { text-align: center; font-size: 11px; color: #a89880; padding-bottom: 12px; min-height: 16px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><img src="logo.jpeg" alt="Isorropia"></div>
+  <div>
+    <h1>Isorropia Harvest</h1>
+    <p>detector de café · prototipo</p>
+  </div>
+</header>
+
+<div class="stage">
+  <video id="video" autoplay muted playsinline></video>
+  <canvas id="overlay" class="overlay"></canvas>
+</div>
+
+<div class="stats">
+  <div class="stat rojo"><div class="n" id="nRojo">0</div><div class="l">Rojo (cosechar)</div></div>
+  <div class="stat"><div class="n" id="nTotal">0</div><div class="l">Detecciones</div></div>
+  <div class="stat"><div class="n" id="nFps">—</div><div class="l">FPS</div></div>
+</div>
+
+<div class="coords">
+  <div class="t">Coordenadas (centro del grano, 0–1 normalizado)</div>
+  <div id="coordsBody"><div class="empty">Sin detecciones todavía…</div></div>
+</div>
+
+<div class="actions">
+  <button id="btnStart">Iniciar cámara</button>
+  <button id="btnCapture">📷 Guardar foto (dataset)</button>
+</div>
+<p id="status">Abrir por HTTPS (la cámara del navegador lo exige).</p>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────────────────────
+// MODELO: hoy usa COCO-SSD como placeholder para probar el pipeline
+// (cámara → modelo → cajas → coordenadas). Cuando el modelo de café esté
+// exportado (yolo export ... format=tfjs), copiar la carpeta a app_camara/model/
+// y reemplazar loadModel() + el bucle de detección por el runtime YOLO de TF.js.
+// Clases reales: verde, naranja, rojo (solo "rojo" se cosecha).
+// ─────────────────────────────────────────────────────────────────────────
+const CLASE_COLOR = { verde: "#46a758", naranja: "#f0b429", rojo: "#e5484d" };
+// ponytail: COCO-SSD no conoce café — mapeamos sus frutas a las 3 clases solo para demo visual
+const DEMO_MAP = { apple: "rojo", orange: "naranja", banana: "verde" };
+
+const video = document.getElementById("video");
+const overlay = document.getElementById("overlay");
+const ctx = overlay.getContext("2d");
+const status = document.getElementById("status");
+const coordsBody = document.getElementById("coordsBody");
+let model = null, running = false;
+
+async function loadModel() {
+  status.textContent = "Cargando modelo…";
+  model = await cocoSsd.load();
+  status.textContent = "Modelo listo (placeholder COCO-SSD — se cambia por el de café)";
+}
+
+async function startCamera() {
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: "environment", width: { ideal: 1280 } }, audio: false,
+  });
+  video.srcObject = stream;
+  await new Promise(r => video.onloadedmetadata = r);
+  overlay.width = video.videoWidth;
+  overlay.height = video.videoHeight;
+}
+
+function drawCoordsTable(items) {
+  if (!items.length) {
+    coordsBody.innerHTML = '<div class="empty">Sin detecciones todavía…</div>';
+    return;
+  }
+  const rows = items.map(d => `
+    <tr>
+      <td><span class="dot" style="background:${CLASE_COLOR[d.clase] ?? '#3b82f6'}"></span>${d.clase}</td>
+      <td>${(d.conf * 100).toFixed(0)}%</td>
+      <td>cx ${d.cx.toFixed(2)}</td>
+      <td>cy ${d.cy.toFixed(2)}</td>
+    </tr>`).join("");
+  coordsBody.innerHTML = `<table>${rows}</table>`;
+}
+
+function draw(dets) {
+  ctx.clearRect(0, 0, overlay.width, overlay.height);
+  const W = overlay.width, H = overlay.height;
+  let rojos = 0;
+  const items = [];
+  for (const d of dets) {
+    const clase = DEMO_MAP[d.class] ?? d.class;
+    if (clase === "rojo") rojos++;
+    const color = CLASE_COLOR[clase] ?? "#3b82f6";
+    const [x, y, w, h] = d.bbox;
+    ctx.strokeStyle = color; ctx.lineWidth = 3;
+    ctx.strokeRect(x, y, w, h);
+    ctx.fillStyle = color;
+    const label = `${clase} ${(d.score * 100) | 0}%`;
+    ctx.font = "bold 16px sans-serif";
+    ctx.fillRect(x, y - 22, ctx.measureText(label).width + 10, 22);
+    ctx.fillStyle = "#fff";
+    ctx.fillText(label, x + 5, y - 6);
+
+    // Coordenadas normalizadas (0-1) — mismo contrato JSON que usará el brazo
+    const cx = (x + w / 2) / W, cy = (y + h / 2) / H;
+    items.push({ clase, conf: d.score, cx, cy });
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    const coordLabel = `(${cx.toFixed(2)}, ${cy.toFixed(2)})`;
+    ctx.font = "11px monospace";
+    ctx.fillText(coordLabel, x + 4, y + h - 6);
+    ctx.fillStyle = "#fff";
+    ctx.fillText(coordLabel, x + 4, y + h - 6);
+  }
+  document.getElementById("nRojo").textContent = rojos;
+  document.getElementById("nTotal").textContent = dets.length;
+  drawCoordsTable(items);
+}
+
+async function loop() {
+  let last = performance.now();
+  while (running) {
+    const dets = await model.detect(video);
+    draw(dets);
+    const now = performance.now();
+    document.getElementById("nFps").textContent = (1000 / (now - last)).toFixed(0);
+    last = now;
+    await tf.nextFrame();
+  }
+}
+
+document.getElementById("btnStart").onclick = async (e) => {
+  e.target.disabled = true;
+  try {
+    await Promise.all([loadModel(), startCamera()]);
+    running = true;
+    loop();
+    e.target.textContent = "Detectando…";
+  } catch (err) {
+    status.textContent = "Error: " + err.message;
+    e.target.disabled = false;
+  }
+};
+
+// Guardar frame para el dataset (descarga JPG con timestamp)
+document.getElementById("btnCapture").onclick = () => {
+  if (!video.videoWidth) return;
+  const c = document.createElement("canvas");
+  c.width = video.videoWidth; c.height = video.videoHeight;
+  c.getContext("2d").drawImage(video, 0, 0);
+  const a = document.createElement("a");
+  a.href = c.toDataURL("image/jpeg", 0.92);
+  a.download = `cafe_${Date.now()}.jpg`;
+  a.click();
+  status.textContent = "Foto guardada para el dataset ✓";
+};
+</script>
+</body>
+</html>
