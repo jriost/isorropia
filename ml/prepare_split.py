@@ -10,7 +10,7 @@ from pathlib import Path
 HERE = Path(__file__).parent
 LABELED = HERE / "dataset" / "labeled"
 SPLIT = HERE / "dataset" / "split"
-CLASSES = ["verde", "naranja", "rojo"]
+CLASSES = ["verde", "naranja", "rojo", "seco"]
 
 
 def main():

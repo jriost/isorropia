@@ -8,29 +8,34 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Segoe UI', system-ui, sans-serif; background: #14100c; color: #f0e6d8; min-height: 100vh; display: flex; flex-direction: column; }
-  header { padding: 14px 18px; display: flex; align-items: center; gap: 10px; }
+  header { padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
   header .logo { width: 34px; height: 34px; border-radius: 10px; background: #fff; display: grid; place-items: center; overflow: hidden; }
   header .logo img { width: 100%; height: 100%; object-fit: contain; }
-  header h1 { font-size: 16px; font-weight: 700; letter-spacing: 0.02em; }
+  header h1 { font-size: 16px; font-weight: 700; }
   header p { font-size: 10px; color: #a89880; text-transform: uppercase; letter-spacing: 0.18em; }
-  .stage { position: relative; flex: 1; margin: 0 12px; border-radius: 16px; overflow: hidden; background: #000; min-height: 50vh; }
+  .stage { position: relative; flex: 1; margin: 0 12px; border-radius: 16px; overflow: hidden; background: #000; min-height: 46vh; }
   video, canvas.overlay { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .stats { display: flex; gap: 10px; padding: 14px 12px; }
-  .stat { flex: 1; background: #1f1812; border: 1px solid #35291d; border-radius: 12px; padding: 10px 14px; }
-  .stat .n { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
-  .stat .l { font-size: 10px; color: #a89880; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
+  .stats { display: flex; gap: 8px; padding: 12px; }
+  .stat { flex: 1; background: #1f1812; border: 1px solid #35291d; border-radius: 12px; padding: 8px 12px; }
+  .stat .n { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: 9px; color: #a89880; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
   .stat.rojo .n { color: #e5484d; }
-  .coords { margin: 0 12px 12px; background: #1f1812; border: 1px solid #35291d; border-radius: 12px; padding: 10px 14px; max-height: 22vh; overflow-y: auto; }
-  .coords .t { font-size: 10px; color: #a89880; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+  .stat.seco .n { color: #a07850; }
+  .coords { margin: 0 12px 10px; background: #1f1812; border: 1px solid #35291d; border-radius: 12px; padding: 8px 12px; max-height: 24vh; overflow-y: auto; }
+  .coords .t { font-size: 9px; color: #a89880; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px; }
   .coords table { width: 100%; font-size: 12px; border-collapse: collapse; }
-  .coords td { padding: 3px 4px; font-variant-numeric: tabular-nums; border-bottom: 1px solid #2a2119; }
-  .coords .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .coords td { padding: 3px 4px; font-variant-numeric: tabular-nums; border-bottom: 1px solid #2a2119; white-space: nowrap; }
+  .coords .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
   .coords .empty { color: #6b5f4f; font-size: 12px; padding: 4px; }
-  .actions { display: flex; gap: 10px; padding: 0 12px 18px; }
-  button { flex: 1; padding: 13px; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .actions { display: flex; gap: 8px; padding: 0 12px 14px; }
+  button { flex: 1; padding: 12px 8px; border: none; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
   #btnStart { background: #6F4E37; color: #fff; }
-  #btnCapture { background: #1f1812; color: #f0e6d8; border: 1px solid #35291d; }
-  #status { text-align: center; font-size: 11px; color: #a89880; padding-bottom: 12px; min-height: 16px; }
+  #btnCal { background: #1f1812; color: #f0e6d8; border: 1px solid #35291d; }
+  .folders { display: flex; gap: 6px; flex-wrap: wrap; }
+  .fbtn { flex: 1; min-width: 30%; padding: 10px 6px; font-size: 12px; border-radius: 10px;
+          background: #1f1812; color: var(--c); border: 1px solid var(--c); }
+  .fbtn:active { background: var(--c); color: #fff; }
+  #status { text-align: center; font-size: 11px; color: #a89880; padding-bottom: 10px; min-height: 16px; }
 </style>
 </head>
 <body>
@@ -38,7 +43,7 @@
   <div class="logo"><img src="logo.jpeg" alt="Isorropia"></div>
   <div>
     <h1>Isorropia Harvest</h1>
-    <p>detector de café · prototipo</p>
+    <p>detector de café · YOLO11n propio</p>
   </div>
 </header>
 
@@ -49,46 +54,67 @@
 
 <div class="stats">
   <div class="stat rojo"><div class="n" id="nRojo">0</div><div class="l">Rojo (cosechar)</div></div>
-  <div class="stat"><div class="n" id="nTotal">0</div><div class="l">Detecciones</div></div>
+  <div class="stat"><div class="n" id="nTotal">0</div><div class="l">Total</div></div>
+  <div class="stat seco"><div class="n" id="nSeco">0</div><div class="l">Seco</div></div>
   <div class="stat"><div class="n" id="nFps">—</div><div class="l">FPS</div></div>
 </div>
 
 <div class="coords">
-  <div class="t">Coordenadas (centro del grano, 0–1 normalizado)</div>
+  <div class="t">Granos detectados — posición (m) relativa a la cámara · dist = distancia directa</div>
   <div id="coordsBody"><div class="empty">Sin detecciones todavía…</div></div>
 </div>
 
 <div class="actions">
   <button id="btnStart">Iniciar cámara</button>
-  <button id="btnCapture">📷 Guardar foto (dataset)</button>
+  <button id="btnCal" title="Pon un grano a 30 cm de la cámara y toca">📏 Calibrar 30 cm</button>
 </div>
-<p id="status">Abrir por HTTPS (la cámara del navegador lo exige).</p>
 
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+<div class="coords" style="max-height:none">
+  <div class="t">Guardar foto para el dataset — se sube al servidor en la carpeta elegida</div>
+  <div class="folders">
+    <button class="fbtn" data-carpeta="rojos" style="--c:#e5484d">rojos</button>
+    <button class="fbtn" data-carpeta="verdes" style="--c:#46a758">verdes</button>
+    <button class="fbtn" data-carpeta="rojo_verdes" style="--c:#b0653f">rojo/verdes</button>
+    <button class="fbtn" data-carpeta="naranjas" style="--c:#f0b429">naranjas</button>
+    <button class="fbtn" data-carpeta="secos" style="--c:#a07850">secos</button>
+  </div>
+</div>
+<p id="status">Cargando…</p>
+
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
 <script>
 // ─────────────────────────────────────────────────────────────────────────
-// MODELO: hoy usa COCO-SSD como placeholder para probar el pipeline
-// (cámara → modelo → cajas → coordenadas). Cuando el modelo de café esté
-// exportado (yolo export ... format=tfjs), copiar la carpeta a app_camara/model/
-// y reemplazar loadModel() + el bucle de detección por el runtime YOLO de TF.js.
-// Clases reales: verde, naranja, rojo (solo "rojo" se cosecha).
+// Modelo YOLO11n entrenado con fotos de la finca. 4 clases.
+// Distancia: monocular por tamaño conocido del grano (Ø≈14 mm) + pinhole.
+//   Z = f_px · D_real / d_px    (d_px = lado menor de la caja: el grano es redondo,
+//   el lado menor sufre menos cuando la caja abarca racimo u oclusión)
+//   X = (cx − W/2) · Z / f_px   Y = (cy − H/2) · Z / f_px
+// f_px sale del FOV típico de celular (66°) y se afina con el botón Calibrar.
+// ponytail: precisión esperada ±15-25% sin calibrar, ±10% calibrado. Para el
+// robot (±5 mm) esto NO basta: ahí va cámara estéreo (OAK-D) — ver PLAN.md.
 // ─────────────────────────────────────────────────────────────────────────
-const CLASE_COLOR = { verde: "#46a758", naranja: "#f0b429", rojo: "#e5484d" };
-// ponytail: COCO-SSD no conoce café — mapeamos sus frutas a las 3 clases solo para demo visual
-const DEMO_MAP = { apple: "rojo", orange: "naranja", banana: "verde" };
+// nc se deriva de la salida del modelo: funciona con el modelo de 3 clases (ronda 1)
+// y con el de 4 (cuando termine de entrenar) sin tocar esta página.
+let CLASES = ["verde", "naranja", "rojo", "seco"];
+const CLASE_COLOR = { verde: "#46a758", naranja: "#f0b429", rojo: "#e5484d", seco: "#a07850" };
+const D_REAL = 0.014;         // diámetro real del grano en metros
+const IMG = 640, CONF = 0.35, IOU = 0.45;
 
 const video = document.getElementById("video");
 const overlay = document.getElementById("overlay");
 const ctx = overlay.getContext("2d");
 const status = document.getElementById("status");
 const coordsBody = document.getElementById("coordsBody");
-let model = null, running = false;
+let session = null, running = false;
+let fovCal = parseFloat(localStorage.getItem("fovCal") || "1");  // factor de calibración sobre f_px
+let lastDets = [];
+
+function fpx(W) { return 0.5 * W / Math.tan((66 / 2) * Math.PI / 180) * fovCal; }
 
 async function loadModel() {
-  status.textContent = "Cargando modelo…";
-  model = await cocoSsd.load();
-  status.textContent = "Modelo listo (placeholder COCO-SSD — se cambia por el de café)";
+  status.textContent = "Cargando modelo de café…";
+  session = await ort.InferenceSession.create("model/best.onnx", { executionProviders: ["wasm"] });
+  status.textContent = "Modelo de café listo ✓";
 }
 
 async function startCamera() {
@@ -101,64 +127,133 @@ async function startCamera() {
   overlay.height = video.videoHeight;
 }
 
-function drawCoordsTable(items) {
-  if (!items.length) {
-    coordsBody.innerHTML = '<div class="empty">Sin detecciones todavía…</div>';
-    return;
+// letterbox del frame a 640x640 → tensor NCHW
+const pre = document.createElement("canvas");
+pre.width = IMG; pre.height = IMG;
+const pctx = pre.getContext("2d", { willReadFrequently: true });
+
+function preprocess() {
+  const W = video.videoWidth, H = video.videoHeight;
+  const sc = Math.min(IMG / W, IMG / H);
+  const nw = Math.round(W * sc), nh = Math.round(H * sc);
+  const dx = (IMG - nw) / 2, dy = (IMG - nh) / 2;
+  pctx.fillStyle = "#727272";
+  pctx.fillRect(0, 0, IMG, IMG);
+  pctx.drawImage(video, dx, dy, nw, nh);
+  const { data } = pctx.getImageData(0, 0, IMG, IMG);
+  const t = new Float32Array(3 * IMG * IMG);
+  for (let i = 0, p = 0; i < IMG * IMG; i++, p += 4) {
+    t[i] = data[p] / 255;                    // R
+    t[i + IMG * IMG] = data[p + 1] / 255;    // G
+    t[i + 2 * IMG * IMG] = data[p + 2] / 255; // B
   }
-  const rows = items.map(d => `
-    <tr>
-      <td><span class="dot" style="background:${CLASE_COLOR[d.clase] ?? '#3b82f6'}"></span>${d.clase}</td>
-      <td>${(d.conf * 100).toFixed(0)}%</td>
-      <td>cx ${d.cx.toFixed(2)}</td>
-      <td>cy ${d.cy.toFixed(2)}</td>
-    </tr>`).join("");
-  coordsBody.innerHTML = `<table>${rows}</table>`;
+  return { tensor: new ort.Tensor("float32", t, [1, 3, IMG, IMG]), sc, dx, dy };
+}
+
+function nms(dets) {
+  dets.sort((a, b) => b.conf - a.conf);
+  const keep = [];
+  for (const d of dets) {
+    let ok = true;
+    for (const k of keep) {
+      const x1 = Math.max(d.x1, k.x1), y1 = Math.max(d.y1, k.y1);
+      const x2 = Math.min(d.x2, k.x2), y2 = Math.min(d.y2, k.y2);
+      const inter = Math.max(0, x2 - x1) * Math.max(0, y2 - y1);
+      const ua = (d.x2 - d.x1) * (d.y2 - d.y1) + (k.x2 - k.x1) * (k.y2 - k.y1) - inter;
+      if (inter / ua > IOU) { ok = false; break; }
+    }
+    if (ok) keep.push(d);
+  }
+  return keep;
+}
+
+async function detect() {
+  const { tensor, sc, dx, dy } = preprocess();
+  const out = await session.run({ [session.inputNames[0]]: tensor });
+  const o = out[session.outputNames[0]];           // [1, 4+nc, 8400]
+  const data = o.data;
+  const nc = o.dims[1] - 4;
+  if (nc === 3 && CLASES.length !== 3) CLASES = ["verde", "naranja", "rojo"];
+  const N = data.length / (4 + nc);
+  let dets = [];
+  for (let i = 0; i < N; i++) {
+    let best = 0, cls = -1;
+    for (let c = 0; c < nc; c++) {
+      const s = data[(4 + c) * N + i];
+      if (s > best) { best = s; cls = c; }
+    }
+    if (best < CONF) continue;
+    const cx = data[i], cy = data[N + i], w = data[2 * N + i], h = data[3 * N + i];
+    dets.push({
+      cls, conf: best,
+      x1: (cx - w / 2 - dx) / sc, y1: (cy - h / 2 - dy) / sc,
+      x2: (cx + w / 2 - dx) / sc, y2: (cy + h / 2 - dy) / sc,
+    });
+  }
+  return nms(dets);
 }
 
 function draw(dets) {
-  ctx.clearRect(0, 0, overlay.width, overlay.height);
   const W = overlay.width, H = overlay.height;
-  let rojos = 0;
+  ctx.clearRect(0, 0, W, H);
+  const f = fpx(W);
+  let rojos = 0, secos = 0;
   const items = [];
   for (const d of dets) {
-    const clase = DEMO_MAP[d.class] ?? d.class;
+    const clase = CLASES[d.cls];
     if (clase === "rojo") rojos++;
-    const color = CLASE_COLOR[clase] ?? "#3b82f6";
-    const [x, y, w, h] = d.bbox;
+    if (clase === "seco") secos++;
+    const color = CLASE_COLOR[clase];
+    const bw = d.x2 - d.x1, bh = d.y2 - d.y1;
     ctx.strokeStyle = color; ctx.lineWidth = 3;
-    ctx.strokeRect(x, y, w, h);
-    ctx.fillStyle = color;
-    const label = `${clase} ${(d.score * 100) | 0}%`;
-    ctx.font = "bold 16px sans-serif";
-    ctx.fillRect(x, y - 22, ctx.measureText(label).width + 10, 22);
-    ctx.fillStyle = "#fff";
-    ctx.fillText(label, x + 5, y - 6);
+    ctx.strokeRect(d.x1, d.y1, bw, bh);
 
-    // Coordenadas normalizadas (0-1) — mismo contrato JSON que usará el brazo
-    const cx = (x + w / 2) / W, cy = (y + h / 2) / H;
-    items.push({ clase, conf: d.score, cx, cy });
-    ctx.fillStyle = "rgba(0,0,0,0.6)";
-    const coordLabel = `(${cx.toFixed(2)}, ${cy.toFixed(2)})`;
-    ctx.font = "11px monospace";
-    ctx.fillText(coordLabel, x + 4, y + h - 6);
+    // distancia por tamaño conocido (lado menor de la caja)
+    const dpx = Math.min(bw, bh);
+    const Z = f * D_REAL / dpx;
+    const cx = d.x1 + bw / 2, cy = d.y1 + bh / 2;
+    const X = (cx - W / 2) * Z / f, Y = (cy - H / 2) * Z / f;
+    const dist = Math.sqrt(X * X + Y * Y + Z * Z);
+    items.push({ clase, conf: d.conf, X, Y, Z, dist });
+
+    const label = `${clase} ${(d.conf * 100) | 0}% · ${dist.toFixed(2)}m`;
+    ctx.font = "bold 15px sans-serif";
+    ctx.fillStyle = color;
+    ctx.fillRect(d.x1, d.y1 - 20, ctx.measureText(label).width + 8, 20);
     ctx.fillStyle = "#fff";
-    ctx.fillText(coordLabel, x + 4, y + h - 6);
+    ctx.fillText(label, d.x1 + 4, d.y1 - 5);
   }
   document.getElementById("nRojo").textContent = rojos;
+  document.getElementById("nSeco").textContent = secos;
   document.getElementById("nTotal").textContent = dets.length;
-  drawCoordsTable(items);
+
+  if (!items.length) {
+    coordsBody.innerHTML = '<div class="empty">Sin detecciones todavía…</div>';
+  } else {
+    items.sort((a, b) => a.dist - b.dist);
+    coordsBody.innerHTML = "<table>" + items.map(d => `
+      <tr>
+        <td><span class="dot" style="background:${CLASE_COLOR[d.clase]}"></span>${d.clase}</td>
+        <td>${(d.conf * 100).toFixed(0)}%</td>
+        <td>x ${d.X.toFixed(2)}</td>
+        <td>y ${d.Y.toFixed(2)}</td>
+        <td>z ${d.Z.toFixed(2)}</td>
+        <td><b>dist ${d.dist.toFixed(2)} m</b></td>
+      </tr>`).join("") + "</table>";
+  }
 }
 
 async function loop() {
   let last = performance.now();
   while (running) {
-    const dets = await model.detect(video);
-    draw(dets);
+    try {
+      lastDets = await detect();
+      draw(lastDets);
+    } catch (e) { status.textContent = "Error: " + e.message; }
     const now = performance.now();
-    document.getElementById("nFps").textContent = (1000 / (now - last)).toFixed(0);
+    document.getElementById("nFps").textContent = (1000 / (now - last)).toFixed(1);
     last = now;
-    await tf.nextFrame();
+    await new Promise(r => requestAnimationFrame(r));
   }
 }
 
@@ -175,18 +270,41 @@ document.getElementById("btnStart").onclick = async (e) => {
   }
 };
 
-// Guardar frame para el dataset (descarga JPG con timestamp)
-document.getElementById("btnCapture").onclick = () => {
-  if (!video.videoWidth) return;
-  const c = document.createElement("canvas");
-  c.width = video.videoWidth; c.height = video.videoHeight;
-  c.getContext("2d").drawImage(video, 0, 0);
-  const a = document.createElement("a");
-  a.href = c.toDataURL("image/jpeg", 0.92);
-  a.download = `cafe_${Date.now()}.jpg`;
-  a.click();
-  status.textContent = "Foto guardada para el dataset ✓";
+// Calibración: grano más grande en pantalla debe estar a 30 cm
+document.getElementById("btnCal").onclick = () => {
+  if (!lastDets.length) { status.textContent = "Apunta a un grano a 30 cm y vuelve a tocar"; return; }
+  const d = lastDets.reduce((a, b) =>
+    Math.min(a.x2 - a.x1, a.y2 - a.y1) > Math.min(b.x2 - b.x1, b.y2 - b.y1) ? a : b);
+  const dpx = Math.min(d.x2 - d.x1, d.y2 - d.y1);
+  const fNeeded = dpx * 0.30 / D_REAL;           // f_px para que ese grano dé 0.30 m
+  fovCal *= fNeeded / fpx(overlay.width);
+  localStorage.setItem("fovCal", String(fovCal));
+  status.textContent = `Calibrado ✓ (factor ${fovCal.toFixed(2)})`;
 };
+
+// Guardado por carpeta: captura el frame y lo sube al servidor (nginx PUT)
+const subidos = {};
+document.querySelectorAll(".fbtn").forEach(btn => {
+  btn.onclick = async () => {
+    if (!video.videoWidth) { status.textContent = "Inicia la cámara primero"; return; }
+    const carpeta = btn.dataset.carpeta;
+    const c = document.createElement("canvas");
+    c.width = video.videoWidth; c.height = video.videoHeight;
+    c.getContext("2d").drawImage(video, 0, 0);
+    const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.92));
+    status.textContent = `Subiendo a ${carpeta}…`;
+    try {
+      const res = await fetch(`/subir-ds-x7k9/${carpeta}/${Date.now()}.jpg`, { method: "PUT", body: blob });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      subidos[carpeta] = (subidos[carpeta] || 0) + 1;
+      status.textContent = `✓ Guardada en ${carpeta} (${subidos[carpeta]} esta sesión)`;
+    } catch (e) {
+      status.textContent = `Error subiendo a ${carpeta}: ${e.message}`;
+    }
+  };
+});
+
+status.textContent = "Toca «Iniciar cámara» (requiere HTTPS)";
 </script>
 </body>
 </html>

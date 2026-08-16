@@ -1,15 +1,18 @@
 # Isorropia ML — Detección de granos de café
 
-3 clases: `verde` (no cosechar), `naranja`/pintón (no cosechar), `rojo` (**el único que se cosecha**).
+4 clases: `verde` (no cosechar), `naranja`/pintón/amarillo (no cosechar), `rojo` (**el único
+que se cosecha**), `seco` (podrido/marrón — descartar).
 
-Pipeline actual (bootstrap por color, sin etiquetado manual):
+Pipeline actual (color HSV + pseudo-etiquetado con el modelo de la ronda anterior):
 
 ```
-dataset/raw/*.jpg → auto_label.py → dataset/labeled/ → prepare_split.py → dataset/split/
-                                                                              │
-                                                                         train.py
-                                                                              │
-                                                              runs/detect/train/weights/best.pt
+dataset/raw/*.jpg → merge_labels.py (HSV ∪ modelo ronda-1) → dataset/labeled/
+                                                                   │
+                                                    prepare_split.py → dataset/split/
+                                                                   │
+                                                              train.py
+                                                                   │
+                                                   runs/detect/train*/weights/best.pt
 ```
 
 Entorno: `ml/.venv` (Python 3.12 de python.org — **no** el de MSYS2, los wheels de PyTorch no calzan con ese ABI).

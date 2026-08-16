@@ -24,18 +24,22 @@ import numpy as np
 HERE = Path(__file__).parent
 RAW_DIR = HERE / "dataset" / "raw"
 OUT_DIR = HERE / "dataset" / "labeled"
-CLASSES = ["verde", "naranja", "rojo"]  # índices 0,1,2 — deben calzar con data.yaml
+CLASSES = ["verde", "naranja", "rojo", "seco"]  # índices 0-3 — deben calzar con data.yaml
 
 # Rangos HSV (OpenCV: H 0-180, S/V 0-255). El rojo maduro va de rojo brillante
 # a vinotinto oscuro (variedad Caturra/Bourbon), por eso el rango es amplio en V.
+# "seco" (podrido/marrón) = tono naranja-café oscuro; se separa de "naranja" por V:
+# naranja brillante V>=110, seco oscuro V<110. Las ramas también son marrones,
+# pero el filtro de circularidad las descarta (son alargadas, no redondas).
 COLOR_RANGES = {
     "verde":   [((35, 60, 40), (85, 255, 255))],
-    "naranja": [((10, 100, 80), (22, 255, 255))],
+    "naranja": [((10, 100, 110), (32, 255, 255))],  # incluye amarillo: variedad amarilla y pintón claro
     "rojo":    [((0, 60, 30), (9, 255, 255)), ((165, 60, 30), (180, 255, 255))],
+    "seco":    [((5, 40, 30), (25, 255, 109))],
 }
 
-MIN_AREA_FRAC = 0.00015   # área mínima de un grano relativa al área de la imagen
-MAX_AREA_FRAC = 0.03      # más grande que esto ya es un racimo fusionado, no un grano
+MIN_AREA_FRAC = 0.0003    # área mínima de un grano; también filtra manchas amarillas de hojas
+MAX_AREA_FRAC = 0.15      # granos en primer plano (distancia de trabajo del brazo) son grandes
 MIN_CIRCULARITY = 0.5     # 1.0 = círculo perfecto; hojas/ramas quedan muy por debajo
 
 
@@ -111,7 +115,7 @@ def main():
     if debug_sample:
         debug_dir.mkdir(parents=True, exist_ok=True)
 
-    total_labels = [0, 0, 0]
+    total_labels = [0] * len(CLASSES)
     vacias = 0
     for foto in fotos:
         img, labels = procesar_imagen(foto)
@@ -131,7 +135,7 @@ def main():
         if foto in debug_sample:
             vis = img.copy()
             H, W = img.shape[:2]
-            colors_bgr = {0: (0, 200, 0), 1: (0, 140, 255), 2: (0, 0, 220)}
+            colors_bgr = {0: (0, 200, 0), 1: (0, 140, 255), 2: (0, 0, 220), 3: (40, 70, 120)}
             for cls_idx, cx, cy, w, h in labels:
                 x1, y1 = int((cx - w / 2) * W), int((cy - h / 2) * H)
                 x2, y2 = int((cx + w / 2) * W), int((cy + h / 2) * H)
