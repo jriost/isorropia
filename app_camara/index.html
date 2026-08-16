@@ -3,109 +3,204 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0e0a07">
 <title>Isorropia Harvest</title>
 <link rel="icon" type="image/jpeg" href="logo.jpeg">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #14100c; color: #f0e6d8; min-height: 100vh; display: flex; flex-direction: column; }
-  header { padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
-  header .logo { width: 34px; height: 34px; border-radius: 10px; background: #fff; display: grid; place-items: center; overflow: hidden; }
-  header .logo img { width: 100%; height: 100%; object-fit: contain; }
-  header h1 { font-size: 16px; font-weight: 700; }
-  header p { font-size: 10px; color: #a89880; text-transform: uppercase; letter-spacing: 0.18em; }
-  .stage { position: relative; flex: 1; margin: 0 12px; border-radius: 16px; overflow: hidden; background: #000; min-height: 46vh; }
+  :root {
+    --bg: #0e0a07;
+    --panel: #191209;
+    --panel2: #221a10;
+    --line: #32271a;
+    --text: #f3ead9;
+    --muted: #9c8a6e;
+    --faint: #6b5c45;
+    --accent: #c98a3d;
+    --rojo: #e5484d; --verde: #4caf6d; --naranja: #f0b429; --seco: #a07850;
+    --radius: 18px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background:
+      radial-gradient(1200px 500px at 50% -10%, #241708 0%, transparent 60%),
+      var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 0 14px 30px;
+  }
+
+  /* ── Header ── */
+  header { display: flex; align-items: center; gap: 12px; padding: 18px 2px 14px; }
+  .logo {
+    width: 42px; height: 42px; border-radius: 13px; background: #fff;
+    display: grid; place-items: center; overflow: hidden; flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(201,138,61,0.25);
+  }
+  .logo img { width: 100%; height: 100%; object-fit: contain; }
+  header h1 { font-size: 19px; font-weight: 800; letter-spacing: -0.01em; }
+  header h1 span { color: var(--accent); }
+  header .sub { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.22em; margin-top: 2px; }
+
+  /* ── Cámara ── */
+  .stage {
+    position: relative; border-radius: var(--radius); overflow: hidden;
+    background: #000; aspect-ratio: 3/4; max-height: 58vh; width: 100%;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.55), 0 0 0 1px var(--line);
+  }
   video, canvas.overlay { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .stats { display: flex; gap: 8px; padding: 12px; }
-  .stat { flex: 1; background: #1f1812; border: 1px solid #35291d; border-radius: 12px; padding: 8px 12px; }
-  .stat .n { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
-  .stat .l { font-size: 9px; color: #a89880; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
-  .stat.rojo .n { color: #e5484d; }
-  .stat.seco .n { color: #a07850; }
-  .coords { margin: 0 12px 10px; background: #1f1812; border: 1px solid #35291d; border-radius: 12px; padding: 8px 12px; max-height: 24vh; overflow-y: auto; }
-  .coords .t { font-size: 9px; color: #a89880; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px; }
-  .coords table { width: 100%; font-size: 12px; border-collapse: collapse; }
-  .coords td { padding: 3px 4px; font-variant-numeric: tabular-nums; border-bottom: 1px solid #2a2119; white-space: nowrap; }
-  .coords .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
-  .coords .empty { color: #6b5f4f; font-size: 12px; padding: 4px; }
-  .actions { display: flex; gap: 8px; padding: 0 12px 14px; }
-  button { flex: 1; padding: 12px 8px; border: none; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
-  #btnStart { background: #6F4E37; color: #fff; }
-  #btnCal { background: #1f1812; color: #f0e6d8; border: 1px solid #35291d; }
-  .folders { display: flex; gap: 6px; flex-wrap: wrap; }
-  .fbtn { flex: 1; min-width: 30%; padding: 10px 6px; font-size: 12px; border-radius: 10px;
-          background: #1f1812; color: var(--c); border: 1px solid var(--c); }
-  .fbtn:active { background: var(--c); color: #fff; }
-  .cnt { opacity: 0.65; font-weight: 400; }
-  #status { text-align: center; font-size: 11px; color: #a89880; padding-bottom: 10px; min-height: 16px; }
+  .stage .hint {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    color: var(--faint); font-size: 13px; text-align: center; padding: 0 30px; line-height: 1.6;
+  }
+  .stage .hint .cam { font-size: 34px; display: block; margin-bottom: 8px; opacity: 0.6; }
+
+  /* stats flotando sobre el video */
+  .statbar {
+    position: absolute; left: 10px; right: 10px; bottom: 10px;
+    display: flex; gap: 8px; pointer-events: none;
+  }
+  .chip {
+    flex: 1; text-align: center; padding: 7px 4px; border-radius: 12px;
+    background: rgba(14,10,7,0.72); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.07);
+  }
+  .chip .n { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .chip .l { font-size: 8.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; }
+  .chip.rojo .n { color: var(--rojo); }
+  .chip.seco .n { color: var(--seco); }
+
+  /* ── Botones principales ── */
+  .actions { display: flex; gap: 10px; margin: 14px 0 6px; }
+  button { border: none; cursor: pointer; font-family: inherit; }
+  .btn-main {
+    flex: 1.6; padding: 15px; border-radius: 14px; font-size: 15px; font-weight: 800;
+    color: #fff; background: linear-gradient(135deg, #a5691f 0%, var(--accent) 55%, #e0a95c 100%);
+    box-shadow: 0 6px 20px rgba(201,138,61,0.3);
+    transition: transform 0.1s;
+  }
+  .btn-main:active { transform: scale(0.97); }
+  .btn-main:disabled { opacity: 0.75; }
+  .btn-ghost {
+    flex: 1; padding: 15px 10px; border-radius: 14px; font-size: 13px; font-weight: 600;
+    background: var(--panel); color: var(--muted); border: 1px solid var(--line);
+  }
+  .btn-ghost:active { background: var(--panel2); }
+
+  #status { text-align: center; font-size: 11.5px; color: var(--muted); min-height: 18px; margin-bottom: 4px; }
+
+  /* ── Tarjetas ── */
+  .card {
+    background: linear-gradient(180deg, var(--panel2) 0%, var(--panel) 100%);
+    border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 14px 16px; margin-top: 12px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.3);
+  }
+  .card .t {
+    font-size: 10px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.18em; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+  }
+  .card .t::before { content: ""; width: 14px; height: 2px; background: var(--accent); border-radius: 2px; }
+
+  /* tabla coordenadas */
+  .scroll { max-height: 25vh; overflow-y: auto; }
+  table { width: 100%; font-size: 12.5px; border-collapse: collapse; }
+  td { padding: 5px 4px; font-variant-numeric: tabular-nums; border-bottom: 1px solid rgba(255,255,255,0.04); white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+  .empty { color: var(--faint); font-size: 12.5px; padding: 6px 2px; }
+  td.dist { font-weight: 700; color: var(--accent); }
+
+  /* botones de clase */
+  .folders { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .fbtn {
+    padding: 13px 6px; font-size: 12.5px; font-weight: 700; border-radius: 12px;
+    background: rgba(255,255,255,0.025); color: var(--c);
+    border: 1.5px solid color-mix(in srgb, var(--c) 45%, transparent);
+    transition: transform 0.08s;
+  }
+  .fbtn:active { background: var(--c); color: #fff; transform: scale(0.96); }
+  .fbtn .cnt { display: block; font-size: 10px; font-weight: 500; opacity: 0.65; margin-top: 2px; }
+
+  /* entrenamiento */
+  #modeloInfo { font-size: 12.5px; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+  #modeloInfo b { color: var(--text); }
+  .btn-train {
+    width: 100%; padding: 15px; border-radius: 14px; font-size: 14.5px; font-weight: 800;
+    color: #eaffe9; background: linear-gradient(135deg, #1d4526 0%, #2d6b3c 100%);
+    border: 1px solid #3a7a4a; box-shadow: 0 6px 18px rgba(45,107,60,0.25);
+  }
+  .btn-train:active { transform: scale(0.97); }
+  #trainEstado { font-size: 11.5px; color: var(--muted); margin-top: 8px; text-align: center; line-height: 1.5; }
+
+  footer { text-align: center; font-size: 10px; color: var(--faint); margin-top: 22px; letter-spacing: 0.05em; }
 </style>
 </head>
 <body>
 <header>
   <div class="logo"><img src="logo.jpeg" alt="Isorropia"></div>
   <div>
-    <h1>Isorropia Harvest</h1>
-    <p>detector de café · YOLO11n propio</p>
+    <h1>Isorropia <span>Harvest</span></h1>
+    <div class="sub">detector de café · yolo11n propio</div>
   </div>
 </header>
 
 <div class="stage">
   <video id="video" autoplay muted playsinline></video>
   <canvas id="overlay" class="overlay"></canvas>
-</div>
-
-<div class="stats">
-  <div class="stat rojo"><div class="n" id="nRojo">0</div><div class="l">Rojo (cosechar)</div></div>
-  <div class="stat"><div class="n" id="nTotal">0</div><div class="l">Total</div></div>
-  <div class="stat seco"><div class="n" id="nSeco">0</div><div class="l">Seco</div></div>
-  <div class="stat"><div class="n" id="nFps">—</div><div class="l">FPS</div></div>
-</div>
-
-<div class="coords">
-  <div class="t">Granos detectados — posición (m) relativa a la cámara · dist = distancia directa</div>
-  <div id="coordsBody"><div class="empty">Sin detecciones todavía…</div></div>
-</div>
-
-<div class="actions">
-  <button id="btnStart">Iniciar cámara</button>
-  <button id="btnCal" title="Pon un grano a 30 cm de la cámara y toca">📏 Calibrar 30 cm</button>
-</div>
-
-<div class="coords" style="max-height:none">
-  <div class="t">Sesión de fotos — cada botón guarda el frame actual en su carpeta del servidor</div>
-  <div class="folders">
-    <button class="fbtn" data-carpeta="rojos" style="--c:#e5484d">rojos <span class="cnt" id="c-rojos"></span></button>
-    <button class="fbtn" data-carpeta="verdes" style="--c:#46a758">verdes <span class="cnt" id="c-verdes"></span></button>
-    <button class="fbtn" data-carpeta="rojo_verdes" style="--c:#b0653f">rojo/verdes <span class="cnt" id="c-rojo_verdes"></span></button>
-    <button class="fbtn" data-carpeta="naranjas" style="--c:#f0b429">naranjas <span class="cnt" id="c-naranjas"></span></button>
-    <button class="fbtn" data-carpeta="secos" style="--c:#a07850">secos <span class="cnt" id="c-secos"></span></button>
+  <div class="hint" id="hint"><div><span class="cam">📷</span>Toca <b>Iniciar cámara</b> y apunta a la mata:<br>verás cada grano con su clase y distancia</div></div>
+  <div class="statbar">
+    <div class="chip rojo"><div class="n" id="nRojo">0</div><div class="l">Rojo · cosechar</div></div>
+    <div class="chip"><div class="n" id="nTotal">0</div><div class="l">Total</div></div>
+    <div class="chip seco"><div class="n" id="nSeco">0</div><div class="l">Seco</div></div>
+    <div class="chip"><div class="n" id="nFps">—</div><div class="l">FPS</div></div>
   </div>
 </div>
 
-<div class="coords" style="max-height:none">
-  <div class="t">Entrenamiento del modelo</div>
-  <p id="modeloInfo" style="font-size:12px;color:#a89880;margin-bottom:8px">—</p>
-  <button id="btnTrain" style="width:100%;background:#2d5c39;color:#fff">🚀 Entrenar con las fotos nuevas</button>
-  <p id="trainEstado" style="font-size:11px;color:#a89880;margin-top:6px;text-align:center"></p>
+<div class="actions">
+  <button id="btnStart" class="btn-main">Iniciar cámara</button>
+  <button id="btnCal" class="btn-ghost" title="Pon un grano a 30 cm y toca">📏 Calibrar</button>
 </div>
 <p id="status">Cargando…</p>
+
+<div class="card">
+  <div class="t">Granos detectados — x·y·z en metros desde la cámara</div>
+  <div class="scroll"><div id="coordsBody"><div class="empty">Sin detecciones todavía…</div></div></div>
+</div>
+
+<div class="card">
+  <div class="t">Sesión de fotos — guarda el frame en su carpeta</div>
+  <div class="folders">
+    <button class="fbtn" data-carpeta="rojos" style="--c:var(--rojo)">rojos<span class="cnt" id="c-rojos">—</span></button>
+    <button class="fbtn" data-carpeta="verdes" style="--c:var(--verde)">verdes<span class="cnt" id="c-verdes">—</span></button>
+    <button class="fbtn" data-carpeta="rojo_verdes" style="--c:#c96a4a">rojo/verdes<span class="cnt" id="c-rojo_verdes">—</span></button>
+    <button class="fbtn" data-carpeta="naranjas" style="--c:var(--naranja)">naranjas<span class="cnt" id="c-naranjas">—</span></button>
+    <button class="fbtn" data-carpeta="secos" style="--c:var(--seco)">secos<span class="cnt" id="c-secos">—</span></button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="t">Entrenamiento del modelo</div>
+  <p id="modeloInfo">—</p>
+  <button id="btnTrain" class="btn-train">🚀 Entrenar con las fotos nuevas</button>
+  <p id="trainEstado"></p>
+</div>
+
+<footer>Isorropia · Finca El Cielo · robot recolector de café</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
 <script>
 // ─────────────────────────────────────────────────────────────────────────
-// Modelo YOLO11n entrenado con fotos de la finca. 4 clases.
+// Modelo YOLO11n entrenado con fotos de la finca (nc dinámico: 3 o 4 clases).
 // Distancia: monocular por tamaño conocido del grano (Ø≈14 mm) + pinhole.
-//   Z = f_px · D_real / d_px    (d_px = lado menor de la caja: el grano es redondo,
-//   el lado menor sufre menos cuando la caja abarca racimo u oclusión)
-//   X = (cx − W/2) · Z / f_px   Y = (cy − H/2) · Z / f_px
-// f_px sale del FOV típico de celular (66°) y se afina con el botón Calibrar.
-// ponytail: precisión esperada ±15-25% sin calibrar, ±10% calibrado. Para el
-// robot (±5 mm) esto NO basta: ahí va cámara estéreo (OAK-D) — ver PLAN.md.
+// ponytail: precisión ±15-25% sin calibrar, ±10% calibrado. Para el robot
+// (±5 mm) va cámara estéreo (OAK-D) — ver PLAN.md.
 // ─────────────────────────────────────────────────────────────────────────
-// nc se deriva de la salida del modelo: funciona con el modelo de 3 clases (ronda 1)
-// y con el de 4 (cuando termine de entrenar) sin tocar esta página.
 let CLASES = ["verde", "naranja", "rojo", "seco"];
-const CLASE_COLOR = { verde: "#46a758", naranja: "#f0b429", rojo: "#e5484d", seco: "#a07850" };
-const D_REAL = 0.014;         // diámetro real del grano en metros
+const CLASE_COLOR = { verde: "#4caf6d", naranja: "#f0b429", rojo: "#e5484d", seco: "#a07850" };
+const D_REAL = 0.014;
 const IMG = 640, CONF = 0.35, IOU = 0.45;
 
 const video = document.getElementById("video");
@@ -114,7 +209,7 @@ const ctx = overlay.getContext("2d");
 const status = document.getElementById("status");
 const coordsBody = document.getElementById("coordsBody");
 let session = null, running = false;
-let fovCal = parseFloat(localStorage.getItem("fovCal") || "1");  // factor de calibración sobre f_px
+let fovCal = parseFloat(localStorage.getItem("fovCal") || "1");
 let lastDets = [];
 
 function fpx(W) { return 0.5 * W / Math.tan((66 / 2) * Math.PI / 180) * fovCal; }
@@ -133,9 +228,9 @@ async function startCamera() {
   await new Promise(r => video.onloadedmetadata = r);
   overlay.width = video.videoWidth;
   overlay.height = video.videoHeight;
+  document.getElementById("hint").style.display = "none";
 }
 
-// letterbox del frame a 640x640 → tensor NCHW
 const pre = document.createElement("canvas");
 pre.width = IMG; pre.height = IMG;
 const pctx = pre.getContext("2d", { willReadFrequently: true });
@@ -151,9 +246,9 @@ function preprocess() {
   const { data } = pctx.getImageData(0, 0, IMG, IMG);
   const t = new Float32Array(3 * IMG * IMG);
   for (let i = 0, p = 0; i < IMG * IMG; i++, p += 4) {
-    t[i] = data[p] / 255;                    // R
-    t[i + IMG * IMG] = data[p + 1] / 255;    // G
-    t[i + 2 * IMG * IMG] = data[p + 2] / 255; // B
+    t[i] = data[p] / 255;
+    t[i + IMG * IMG] = data[p + 1] / 255;
+    t[i + 2 * IMG * IMG] = data[p + 2] / 255;
   }
   return { tensor: new ort.Tensor("float32", t, [1, 3, IMG, IMG]), sc, dx, dy };
 }
@@ -178,7 +273,7 @@ function nms(dets) {
 async function detect() {
   const { tensor, sc, dx, dy } = preprocess();
   const out = await session.run({ [session.inputNames[0]]: tensor });
-  const o = out[session.outputNames[0]];           // [1, 4+nc, 8400]
+  const o = out[session.outputNames[0]];
   const data = o.data;
   const nc = o.dims[1] - 4;
   if (nc === 3 && CLASES.length !== 3) CLASES = ["verde", "naranja", "rojo"];
@@ -216,7 +311,6 @@ function draw(dets) {
     ctx.strokeStyle = color; ctx.lineWidth = 3;
     ctx.strokeRect(d.x1, d.y1, bw, bh);
 
-    // distancia por tamaño conocido (lado menor de la caja)
     const dpx = Math.min(bw, bh);
     const Z = f * D_REAL / dpx;
     const cx = d.x1 + bw / 2, cy = d.y1 + bh / 2;
@@ -246,7 +340,7 @@ function draw(dets) {
         <td>x ${d.X.toFixed(2)}</td>
         <td>y ${d.Y.toFixed(2)}</td>
         <td>z ${d.Z.toFixed(2)}</td>
-        <td><b>dist ${d.dist.toFixed(2)} m</b></td>
+        <td class="dist">${d.dist.toFixed(2)} m</td>
       </tr>`).join("") + "</table>";
   }
 }
@@ -278,19 +372,18 @@ document.getElementById("btnStart").onclick = async (e) => {
   }
 };
 
-// Calibración: grano más grande en pantalla debe estar a 30 cm
 document.getElementById("btnCal").onclick = () => {
   if (!lastDets.length) { status.textContent = "Apunta a un grano a 30 cm y vuelve a tocar"; return; }
   const d = lastDets.reduce((a, b) =>
     Math.min(a.x2 - a.x1, a.y2 - a.y1) > Math.min(b.x2 - b.x1, b.y2 - b.y1) ? a : b);
   const dpx = Math.min(d.x2 - d.x1, d.y2 - d.y1);
-  const fNeeded = dpx * 0.30 / D_REAL;           // f_px para que ese grano dé 0.30 m
+  const fNeeded = dpx * 0.30 / D_REAL;
   fovCal *= fNeeded / fpx(overlay.width);
   localStorage.setItem("fovCal", String(fovCal));
   status.textContent = `Calibrado ✓ (factor ${fovCal.toFixed(2)})`;
 };
 
-// Guardado por carpeta: captura el frame y lo sube al servidor (nginx PUT)
+// ── Sesión de fotos: subida por carpeta ──────────────────────────────────
 const subidos = {};
 document.querySelectorAll(".fbtn").forEach(btn => {
   btn.onclick = async () => {
@@ -313,11 +406,9 @@ document.querySelectorAll(".fbtn").forEach(btn => {
   };
 });
 
-// ── Entrenamiento remoto ──────────────────────────────────────────────────
-// El botón deja una solicitud (flag) en el servidor; el PC de la finca la
-// recoge (tarea programada cada 15 min), entrena con TODAS las fotos y sube
-// el modelo nuevo aquí mismo. ponytail: el VPS tiene 1 CPU — entrenar allá
-// tumbaría producción; el entrenamiento corre en el PC cuando esté prendido.
+// ── Entrenamiento remoto ─────────────────────────────────────────────────
+// El botón deja un flag en el servidor; el PC lo recoge (tarea cada 15 min),
+// entrena y sube el modelo nuevo aquí. El VPS (1 CPU) no entrena.
 const CARPETAS = ["rojos", "verdes", "rojo_verdes", "naranjas", "secos"];
 
 async function contarCarpetas() {
@@ -325,8 +416,8 @@ async function contarCarpetas() {
     try {
       const r = await fetch(`/subir-ds-x7k9/${c}/`, { cache: "no-store" });
       const lista = await r.json();
-      document.getElementById("c-" + c).textContent = `(${lista.filter(f => f.type === "file").length})`;
-    } catch { /* sin red o carpeta vacía */ }
+      document.getElementById("c-" + c).textContent = lista.filter(f => f.type === "file").length + " fotos";
+    } catch { }
   }
 }
 
@@ -337,13 +428,13 @@ async function estadoEntrenamiento() {
     const r = await fetch("model/info.json", { cache: "no-store" });
     if (r.ok) {
       const j = await r.json();
-      info.textContent = `Modelo actual: ${j.fecha} · ${j.fotos} fotos · mAP50 rojo ${j.map50_rojo ?? "?"}`;
-    } else info.textContent = "Modelo actual: ronda 1 (sin info.json)";
+      info.innerHTML = `Modelo actual: <b>${j.fecha}</b> · ${j.fotos} fotos · precisión rojo <b>${Math.round((j.map50_rojo ?? 0) * 100)}%</b>`;
+    } else info.textContent = "Modelo actual: ronda 1 — entrenamiento nuevo en curso";
   } catch { info.textContent = "Modelo actual: sin información"; }
   try {
     const f = await fetch("/subir-ds-x7k9/entrenar.flag", { cache: "no-store" });
     est.textContent = f.ok
-      ? "⏳ Solicitud de entrenamiento pendiente — el PC la tomará cuando esté encendido"
+      ? "⏳ Solicitud pendiente — el PC la tomará cuando esté encendido"
       : "";
   } catch { }
 }
@@ -359,7 +450,6 @@ document.getElementById("btnTrain").onclick = async () => {
 
 contarCarpetas();
 estadoEntrenamiento();
-
 status.textContent = "Toca «Iniciar cámara» (requiere HTTPS)";
 </script>
 </body>
