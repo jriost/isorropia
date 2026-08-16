@@ -35,6 +35,7 @@
   .fbtn { flex: 1; min-width: 30%; padding: 10px 6px; font-size: 12px; border-radius: 10px;
           background: #1f1812; color: var(--c); border: 1px solid var(--c); }
   .fbtn:active { background: var(--c); color: #fff; }
+  .cnt { opacity: 0.65; font-weight: 400; }
   #status { text-align: center; font-size: 11px; color: #a89880; padding-bottom: 10px; min-height: 16px; }
 </style>
 </head>
@@ -70,14 +71,21 @@
 </div>
 
 <div class="coords" style="max-height:none">
-  <div class="t">Guardar foto para el dataset — se sube al servidor en la carpeta elegida</div>
+  <div class="t">Sesión de fotos — cada botón guarda el frame actual en su carpeta del servidor</div>
   <div class="folders">
-    <button class="fbtn" data-carpeta="rojos" style="--c:#e5484d">rojos</button>
-    <button class="fbtn" data-carpeta="verdes" style="--c:#46a758">verdes</button>
-    <button class="fbtn" data-carpeta="rojo_verdes" style="--c:#b0653f">rojo/verdes</button>
-    <button class="fbtn" data-carpeta="naranjas" style="--c:#f0b429">naranjas</button>
-    <button class="fbtn" data-carpeta="secos" style="--c:#a07850">secos</button>
+    <button class="fbtn" data-carpeta="rojos" style="--c:#e5484d">rojos <span class="cnt" id="c-rojos"></span></button>
+    <button class="fbtn" data-carpeta="verdes" style="--c:#46a758">verdes <span class="cnt" id="c-verdes"></span></button>
+    <button class="fbtn" data-carpeta="rojo_verdes" style="--c:#b0653f">rojo/verdes <span class="cnt" id="c-rojo_verdes"></span></button>
+    <button class="fbtn" data-carpeta="naranjas" style="--c:#f0b429">naranjas <span class="cnt" id="c-naranjas"></span></button>
+    <button class="fbtn" data-carpeta="secos" style="--c:#a07850">secos <span class="cnt" id="c-secos"></span></button>
   </div>
+</div>
+
+<div class="coords" style="max-height:none">
+  <div class="t">Entrenamiento del modelo</div>
+  <p id="modeloInfo" style="font-size:12px;color:#a89880;margin-bottom:8px">—</p>
+  <button id="btnTrain" style="width:100%;background:#2d5c39;color:#fff">🚀 Entrenar con las fotos nuevas</button>
+  <p id="trainEstado" style="font-size:11px;color:#a89880;margin-top:6px;text-align:center"></p>
 </div>
 <p id="status">Cargando…</p>
 
@@ -298,11 +306,59 @@ document.querySelectorAll(".fbtn").forEach(btn => {
       if (!res.ok) throw new Error("HTTP " + res.status);
       subidos[carpeta] = (subidos[carpeta] || 0) + 1;
       status.textContent = `✓ Guardada en ${carpeta} (${subidos[carpeta]} esta sesión)`;
+      contarCarpetas();
     } catch (e) {
       status.textContent = `Error subiendo a ${carpeta}: ${e.message}`;
     }
   };
 });
+
+// ── Entrenamiento remoto ──────────────────────────────────────────────────
+// El botón deja una solicitud (flag) en el servidor; el PC de la finca la
+// recoge (tarea programada cada 15 min), entrena con TODAS las fotos y sube
+// el modelo nuevo aquí mismo. ponytail: el VPS tiene 1 CPU — entrenar allá
+// tumbaría producción; el entrenamiento corre en el PC cuando esté prendido.
+const CARPETAS = ["rojos", "verdes", "rojo_verdes", "naranjas", "secos"];
+
+async function contarCarpetas() {
+  for (const c of CARPETAS) {
+    try {
+      const r = await fetch(`/subir-ds-x7k9/${c}/`, { cache: "no-store" });
+      const lista = await r.json();
+      document.getElementById("c-" + c).textContent = `(${lista.filter(f => f.type === "file").length})`;
+    } catch { /* sin red o carpeta vacía */ }
+  }
+}
+
+async function estadoEntrenamiento() {
+  const info = document.getElementById("modeloInfo");
+  const est = document.getElementById("trainEstado");
+  try {
+    const r = await fetch("model/info.json", { cache: "no-store" });
+    if (r.ok) {
+      const j = await r.json();
+      info.textContent = `Modelo actual: ${j.fecha} · ${j.fotos} fotos · mAP50 rojo ${j.map50_rojo ?? "?"}`;
+    } else info.textContent = "Modelo actual: ronda 1 (sin info.json)";
+  } catch { info.textContent = "Modelo actual: sin información"; }
+  try {
+    const f = await fetch("/subir-ds-x7k9/entrenar.flag", { cache: "no-store" });
+    est.textContent = f.ok
+      ? "⏳ Solicitud de entrenamiento pendiente — el PC la tomará cuando esté encendido"
+      : "";
+  } catch { }
+}
+
+document.getElementById("btnTrain").onclick = async () => {
+  const est = document.getElementById("trainEstado");
+  try {
+    const r = await fetch(`/subir-ds-x7k9/entrenar.flag`, { method: "PUT", body: String(Date.now()) });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    est.textContent = "⏳ Solicitud registrada — el PC entrenará cuando esté encendido (toma horas)";
+  } catch (e) { est.textContent = "Error: " + e.message; }
+};
+
+contarCarpetas();
+estadoEntrenamiento();
 
 status.textContent = "Toca «Iniciar cámara» (requiere HTTPS)";
 </script>

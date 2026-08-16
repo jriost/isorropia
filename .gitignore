@@ -18,3 +18,8 @@ dataset_tool/__pycache__/
 
 # generado, no fuente
 PLAN.html
+
+# credenciales del servidor — NUNCA subir (repo público)
+.server_key
+ml/.train.lock
+ml/entrenar_auto.log
